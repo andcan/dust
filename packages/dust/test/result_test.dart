@@ -60,6 +60,12 @@ void main() {
     expect(Ok(42).andThen((_) => Ok(43)), equals(Ok(43)));
   });
 
+  test('capture', () async {
+    expect(await Future.value(42).capture(), equals(Ok(42)));
+    expect(await Future.error('ERR', trace).capture(),
+        equals(Err.withStackTrace('ERR', trace)));
+  });
+
   test('contains', () {
     expect(Ok(42).contains(42), equals(isTrue));
     expect(Ok(42).contains(13), equals(isFalse));

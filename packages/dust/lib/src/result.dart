@@ -288,3 +288,12 @@ extension ResultExtension<T, E> on T {
   /// Returns a [Result]<[T], [E]> containing this.
   Result<T, E> get toResult => Ok(this);
 }
+
+/// [Future] extension for [Result].
+extension ResultFutureExtension<T, E> on Future<T> {
+  /// Transforms this into a [Result]<[T], [E]>.
+  ///
+  /// Returns [Ok] if this completes with a value, otherwise returns [Err].
+  Future<Result<T, E>> capture() => then((value) => Ok<T, E>(value),
+      onError: (error, stackTrace) => Err.withStackTrace(error, stackTrace));
+}
