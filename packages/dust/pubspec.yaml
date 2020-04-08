@@ -1,0 +1,12 @@
+name: dust
+description: a rust inspired library for dart
+version: 0.0.1
+homepage: https://www.example.com
+
+environment:
+  sdk: '>=2.7.0 <3.0.0'
+
+dev_dependencies:
+  effective_dart: ^1.2.1
+  test: ^1.0.0
+
