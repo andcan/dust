@@ -134,6 +134,24 @@ void main() {
     expect(Ok(42).or(Ok(13)), equals(Ok(42)));
   });
 
+  test('or else', () {
+    expect(Ok(42).orElse((error, _) => Err.withStackTrace('ERR', trace)),
+        equals(Ok(42)));
+    expect(Err.withStackTrace('ERR', trace).orElse((error, _) => Ok(42)),
+        equals(Ok(42)));
+    expect(
+      Err.withStackTrace('ERR', trace)
+          .orElse((error, _) => Err.withStackTrace('ERR1', trace)),
+      equals(Err.withStackTrace('ERR1', trace)),
+    );
+    expect(
+      Err.withStackTrace('ERR1', trace)
+          .orElse((error, _) => Err.withStackTrace('ERR', trace)),
+      equals(Err.withStackTrace('ERR', trace)),
+    );
+    expect(Ok(42).orElse((error, _) => Ok(13)), equals(Ok(42)));
+  });
+
   test('to err', () {
     expect(Ok(42).toErr, equals(None()));
     expect(Err.withStackTrace('ERR', trace).toErr,

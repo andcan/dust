@@ -95,6 +95,12 @@ class Err<T, E> implements Result<T, E> {
 
   @override
   String toString() => 'Err<$T,$E>($error)';
+
+  @override
+  Result<T, F> orElse<F>(
+    Result<T, F> Function(E error, StackTrace stackTrace) orElse,
+  ) =>
+      orElse(error, stackTrace);
 }
 
 /// Contains the success value.
@@ -174,6 +180,12 @@ class Ok<T, E> implements Result<T, E> {
 
   @override
   String toString() => 'Ok<$T,$E>($value)';
+
+  @override
+  Result<T, F> orElse<F>(
+    Result<T, F> Function(E error, StackTrace stackTrace) orElse,
+  ) =>
+      Ok(value);
 }
 
 /// [Result] is a type that represents either success ([Ok]<[T], [E]>)
@@ -261,6 +273,14 @@ abstract class Result<T, E> {
   /// function call, it is recommended to use [orElse], which is lazily
   /// evaluated.
   Result<T, F> or<F>(Result<T, F> other);
+
+  /// Calls [orElse] if the result is [Err].
+  ///
+  /// Otherwise returns the [Ok] value. This function can be used for control
+  /// flow based on result values.
+  Result<T, F> orElse<F>(
+    Result<T, F> Function(E error, StackTrace stackTrace) orElse,
+  );
 }
 
 /// [Object] extension for [Result].

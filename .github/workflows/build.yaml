@@ -1,0 +1,25 @@
+name: build
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image:  google/dart:latest
+    strategy:
+      matrix:
+        package:
+          - dust
+        version:
+          - latest
+    steps:
+#      - uses: actions/checkout@v2
+      - name: Install dependencies
+        working-directory: packages/${{ matrix.package }}
+        run: pub get
+      - name: Analyze
+        working-directory: packages/${{ matrix.package }}
+        run: dartanalyzer --fatal-infos --fatal-warnings .
