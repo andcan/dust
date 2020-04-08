@@ -295,5 +295,6 @@ extension ResultFutureExtension<T, E> on Future<T> {
   ///
   /// Returns [Ok] if this completes with a value, otherwise returns [Err].
   Future<Result<T, E>> capture() => then((value) => Ok<T, E>(value),
-      onError: (error, stackTrace) => Err.withStackTrace(error, stackTrace));
+      onError: (error, stackTrace) =>
+          Err<T, E>.withStackTrace(error, stackTrace));
 }
