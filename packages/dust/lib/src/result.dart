@@ -192,6 +192,15 @@ class Ok<T, E> implements Result<T, E> {
 /// or failure ([Err]<[T], [E]).
 @sealed
 abstract class Result<T, E> {
+  /// Executes [computation] returning an [Ok] or [Err] if it throws.
+  factory Result(T Function() computation) {
+    try {
+      return Ok(computation());
+    } on Object catch (e, st) {
+      return Err<T, E>.withStackTrace(e, st);
+    }
+  }
+
   /// Returns true if the result is an [Err].
   bool get isErr;
 
@@ -294,7 +303,9 @@ extension ResultFutureExtension<T, E> on Future<T> {
   /// Transforms this into a [Result]<[T], [E]>.
   ///
   /// Returns [Ok] if this completes with a value, otherwise returns [Err].
-  Future<Result<T, E>> capture() => then((value) => Ok<T, E>(value),
-      onError: (error, stackTrace) =>
-          Err<T, E>.withStackTrace(error, stackTrace));
+  Future<Result<T, E>> capture() => then(
+        (value) => Ok<T, E>(value),
+        onError: (error, stackTrace) =>
+            Err<T, E>.withStackTrace(error, stackTrace),
+      );
 }

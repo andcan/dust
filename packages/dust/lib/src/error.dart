@@ -1,12 +1,14 @@
 import 'package:meta/meta.dart';
 
 /// Represents an unexpected state.
-class Panic extends Error {
-  /// The error message.
-  final String message;
+class Panic<T> extends Error {
+  /// The error [value].
+  final T value;
 
-  /// Returns [Panic] with message.
-  Panic(dynamic message) : message = message.toString();
+  /// Returns [Panic] with [value].
+  Panic(this.value);
+
+  String toString() => '$value';
 }
 
 /// An Object which acts as a tuple containing both an error and the

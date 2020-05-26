@@ -12,14 +12,15 @@ Matcher get panics => throwsA(isPanicError);
 
 Matcher get throwsAssertionError => throwsA(isAssertionError);
 
-void testEquality<T>(
-  dynamic description, {
+void testEquality<T>({
+  dynamic description,
   @required T a,
   @required T a1,
   @required T a2,
   @required T b,
 }) {
-  group(description, () {
+
+  void runTests() {
     test('reflexive', () {
       expect(a, equals(a));
       expect(a.hashCode, equals(a.hashCode));
@@ -47,5 +48,11 @@ void testEquality<T>(
               (a.hashCode == b.hashCode),
           isTrue);
     });
-  });
+  };
+
+  if(description != null) {
+    group(description, runTests);
+  } else {
+    runTests();
+  }
 }

@@ -1,16 +1,29 @@
 import 'dart:async';
 import 'package:meta/meta.dart';
 
-mixin Disposable {
-  final List<StreamSubscription> _subscriptions = <StreamSubscription>[];
+typedef DisposerFunc = FutureOr<void> Function();
+
+mixin Disposer {
+  final List<DisposerFunc> _disposers = <DisposerFunc>[];
 
   @protected
-  void addSubscription(StreamSubscription subscription) {
-    _subscriptions.add(subscription);
+  void addDisposer(DisposerFunc f) {
+    _disposers.add(f);
   }
 
   @mustCallSuper
-  Future<void> dispose() async => Future.wait([
-        for (final sub in _subscriptions) sub.cancel(),
-      ]);
+  Future<void> dispose() async {
+    if(_disposers.isEmpty) {
+      return;
+    }
+    return Future.wait([
+        for (final f in _disposers) Future(f),
+      ], eagerError: true);
+  }
+}
+
+mixin SubscriptionDisposer on Disposer {
+  @protected
+  void manageSubscription(StreamSubscription subscription) =>
+      addDisposer(subscription.cancel);
 }

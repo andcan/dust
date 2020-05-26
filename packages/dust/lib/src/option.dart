@@ -111,6 +111,13 @@ abstract class Option<T> {
   /// Returns [true] if the option is a [Some] value.
   bool get isSome;
 
+  /// Provides a view of this option as an option of [R].
+  ///
+  /// If this option contains an instance of [R], all operations will work
+  /// correctly. If any operation tries to access a value that is not an
+  /// instance of [R], the access will throw instead.
+  Option<R> cast<R>() => andThen((value) => Some<R>(value as R));
+
   /// Returns this.
   ///
   /// Avoids [OptionExtension] shadowing.
