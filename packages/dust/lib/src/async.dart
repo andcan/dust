@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:meta/meta.dart';
 
 typedef DisposerFunc = FutureOr<void> Function();
@@ -13,12 +14,12 @@ mixin Disposer {
 
   @mustCallSuper
   Future<void> dispose() async {
-    if(_disposers.isEmpty) {
+    if (_disposers.isEmpty) {
       return;
     }
     return Future.wait([
-        for (final f in _disposers) Future(f),
-      ], eagerError: true);
+      for (final f in _disposers) Future(f),
+    ], eagerError: true);
   }
 }
 

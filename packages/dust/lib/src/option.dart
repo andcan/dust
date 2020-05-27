@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
+import 'package:dust/dust.dart';
 import 'package:meta/meta.dart';
-
-import '../dust.dart';
 
 /// No value
 @immutable
@@ -56,6 +55,12 @@ class None<T> extends Option<T> {
   }
 
   @override
+  Result<T, E> okOr<E>(E error) => Err(error);
+
+  @override
+  Result<T, E> okOrElse<E>(E Function() f) => Err(f());
+
+  @override
   Option<T> or(Option<T> other) => other;
 
   @override
@@ -82,12 +87,6 @@ class None<T> extends Option<T> {
   @override
   Option<T> xor(Option<T> other) =>
       other.match(some: (_) => other, none: () => this);
-
-  @override
-  Result<T, E> okOr<E>(E error) => Err(error);
-
-  @override
-  Result<T, E> okOrElse<E>(E Function() f) => Err(f());
 }
 
 /// Represents an optional value.
@@ -111,13 +110,6 @@ abstract class Option<T> {
   /// Returns [true] if the option is a [Some] value.
   bool get isSome;
 
-  /// Provides a view of this option as an option of [R].
-  ///
-  /// If this option contains an instance of [R], all operations will work
-  /// correctly. If any operation tries to access a value that is not an
-  /// instance of [R], the access will throw instead.
-  Option<R> cast<R>() => andThen((value) => Some<R>(value as R));
-
   /// Returns this.
   ///
   /// Avoids [OptionExtension] shadowing.
@@ -131,6 +123,13 @@ abstract class Option<T> {
   ///
   /// Otherwise calls [f] with the wrapped [value] and returns the result.
   Option<U> andThen<U>(Option<U> Function(T value) f);
+
+  /// Provides a view of this option as an option of [R].
+  ///
+  /// If this option contains an instance of [R], all operations will work
+  /// correctly. If any operation tries to access a value that is not an
+  /// instance of [R], the access will throw instead.
+  Option<R> cast<R>() => andThen((value) => Some<R>(value as R));
 
   /// Returns [true] if the option is a [Some] value containing the given
   /// [value].
@@ -158,6 +157,19 @@ abstract class Option<T> {
     @required U Function(T value) some,
     @required U Function() none,
   });
+
+  /// Transforms the [Option]<[T]> into a [Result]<[T], [E]>.
+  ///
+  /// Maps [Some] to [Ok] and [None] to [Err].
+  /// Arguments are eagerly evaluated; if you are passing the result of a
+  /// function call, it is recommended to use [okOrElse], which is lazily
+  /// evaluated.
+  Result<T, E> okOr<E>(E error);
+
+  /// Transforms the [Option]<T> into a [Result]<[T], [E]>.
+  ///
+  /// Maps [Some] to [Ok] and [None] to [Err].
+  Result<T, E> okOrElse<E>(E Function() f);
 
   /// Returns [this] if it contains a [value], otherwise returns [other].
   ///
@@ -205,19 +217,6 @@ abstract class Option<T> {
   /// Returns [Some] if exactly one of this, other is Some, otherwise returns
   /// [None].
   Option<T> xor(Option<T> other);
-
-  /// Transforms the [Option]<[T]> into a [Result]<[T], [E]>.
-  ///
-  /// Maps [Some] to [Ok] and [None] to [Err].
-  /// Arguments are eagerly evaluated; if you are passing the result of a
-  /// function call, it is recommended to use [okOrElse], which is lazily
-  /// evaluated.
-  Result<T, E> okOr<E>(E error);
-
-  /// Transforms the [Option]<T> into a [Result]<[T], [E]>.
-  ///
-  /// Maps [Some] to [Ok] and [None] to [Err].
-  Result<T, E> okOrElse<E>(E Function() f);
 }
 
 /// Some value [T]
@@ -281,6 +280,12 @@ class Some<T> extends Option<T> {
   }
 
   @override
+  Result<T, E> okOr<E>(E error) => Ok(value);
+
+  @override
+  Result<T, E> okOrElse<E>(E Function() f) => Ok(value);
+
+  @override
   Option<T> or(Option<T> other) => this;
 
   @override
@@ -307,13 +312,13 @@ class Some<T> extends Option<T> {
 
   @override
   Option<T> xor(Option<T> other) =>
-      other.match(some: (_) => None(), none: () => this);
+      other.match(some: (_) => None<T>(), none: () => this);
+}
 
-  @override
-  Result<T, E> okOr<E>(E error) => Ok(value);
-
-  @override
-  Result<T, E> okOrElse<E>(E Function() f) => Ok(value);
+/// [Object] extension for [Option].
+extension OptionExtension<T> on T {
+  /// Returns an [Option]<[T]> containing this.
+  Option<T> get toOption => Some(this);
 }
 
 /// Extension for [Option]<[Option]<[T]>>
@@ -336,12 +341,6 @@ extension OptionResultExtension<T, E> on Option<Result<T, E>> {
           ok: (value) => Ok(Some(value)),
           err: (error, stackTrace) => Err.withStackTrace(error, stackTrace),
         ),
-        none: () => Ok(None()),
+        none: () => Ok<Option<T>, E>(None<T>()),
       );
-}
-
-/// [Object] extension for [Option].
-extension OptionExtension<T> on T {
-  /// Returns an [Option]<[T]> containing this.
-  Option<T> get toOption => Some(this);
 }

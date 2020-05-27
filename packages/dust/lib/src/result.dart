@@ -1,7 +1,5 @@
+import 'package:dust/dust.dart';
 import 'package:meta/meta.dart';
-
-import 'error.dart';
-import 'option.dart';
 
 /// Contains the error value.
 @immutable
@@ -94,13 +92,16 @@ class Err<T, E> implements Result<T, E> {
   Result<T, F> or<F>(Result<T, F> other) => other;
 
   @override
-  String toString() => 'Err<$T,$E>($error)';
-
-  @override
   Result<T, F> orElse<F>(
     Result<T, F> Function(E error, StackTrace stackTrace) orElse,
   ) =>
       orElse(error, stackTrace);
+
+  @override
+  String toString() => 'Err<$T,$E>($error)';
+
+  @override
+  T unwrap() => throw Panic('called unwrap on an Err: $error');
 }
 
 /// Contains the success value.
@@ -122,7 +123,7 @@ class Ok<T, E> implements Result<T, E> {
   bool get isOk => true;
 
   @override
-  Option<ErrorAndStackTrace<E>> get toErr => None();
+  Option<ErrorAndStackTrace<E>> get toErr => None<ErrorAndStackTrace<E>>();
 
   @override
   Option<T> get toOk => Some(value);
@@ -179,13 +180,16 @@ class Ok<T, E> implements Result<T, E> {
   Result<T, F> or<F>(Result<T, F> other) => Ok(value);
 
   @override
-  String toString() => 'Ok<$T,$E>($value)';
-
-  @override
   Result<T, F> orElse<F>(
     Result<T, F> Function(E error, StackTrace stackTrace) orElse,
   ) =>
       Ok(value);
+
+  @override
+  String toString() => 'Ok<$T,$E>($value)';
+
+  @override
+  T unwrap() => value;
 }
 
 /// [Result] is a type that represents either success ([Ok]<[T], [E]>)
@@ -196,7 +200,7 @@ abstract class Result<T, E> {
   factory Result(T Function() computation) {
     try {
       return Ok(computation());
-    } on Object catch (e, st) {
+    } on E catch (e, st) {
       return Err<T, E>.withStackTrace(e, st);
     }
   }
@@ -290,6 +294,12 @@ abstract class Result<T, E> {
   Result<T, F> orElse<F>(
     Result<T, F> Function(E error, StackTrace stackTrace) orElse,
   );
+
+  /// Returns the contained [Ok] value.
+  /// Because this function may panic, its use is generally discouraged.
+  /// Instead, prefer to use [match] and handle the [Err] case explicitly, or
+  /// call [unwrapOr], [unwrapOrElse], or [unwrapOrDefault].
+  T unwrap();
 }
 
 /// [Object] extension for [Result].
@@ -305,7 +315,7 @@ extension ResultFutureExtension<T, E> on Future<T> {
   /// Returns [Ok] if this completes with a value, otherwise returns [Err].
   Future<Result<T, E>> capture() => then(
         (value) => Ok<T, E>(value),
-        onError: (error, stackTrace) =>
+        onError: (E error, StackTrace stackTrace) =>
             Err<T, E>.withStackTrace(error, stackTrace),
       );
 }

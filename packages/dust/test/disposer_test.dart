@@ -1,10 +1,8 @@
 import 'dart:async';
 
+import 'package:dust/dust.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
-
-// ignore: avoid_relative_lib_imports
-import '../lib/dust.dart';
 
 void main() {
   group('disposer', () {
@@ -50,8 +48,6 @@ void main() {
   });
 }
 
-class _StreamSubscription extends Mock implements StreamSubscription {}
-
 class _Disposer with Disposer {
   _Disposer(Iterable<DisposerFunc> disposerFuncs) {
     for (final d in disposerFuncs) {
@@ -60,6 +56,10 @@ class _Disposer with Disposer {
   }
 }
 
+class _EmptyDisposer with Disposer {}
+
+class _StreamSubscription extends Mock implements StreamSubscription {}
+
 class _SubscriptionDisposer with Disposer, SubscriptionDisposer {
   _SubscriptionDisposer(Iterable<StreamSubscription> subscriptions) {
     for (final sub in subscriptions) {
@@ -67,5 +67,3 @@ class _SubscriptionDisposer with Disposer, SubscriptionDisposer {
     }
   }
 }
-
-class _EmptyDisposer with Disposer {}

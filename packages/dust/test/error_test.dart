@@ -1,7 +1,6 @@
 import 'package:test/test.dart';
 
-// ignore: avoid_relative_lib_imports
-import '../lib/dust.dart';
+import 'package:dust/dust.dart';
 import 'shared.dart';
 
 void main() {

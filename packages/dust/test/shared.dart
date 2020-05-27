@@ -1,12 +1,10 @@
-import 'package:test/test.dart';
+import 'package:dust/dust.dart';
 import 'package:meta/meta.dart';
-
-// ignore: avoid_relative_lib_imports
-import '../lib/dust.dart';
-
-Matcher get isPanicError => isA<Panic>();
+import 'package:test/test.dart';
 
 Matcher get isAssertionError => isA<AssertionError>();
+
+Matcher get isPanicError => isA<Panic>();
 
 Matcher get panics => throwsA(isPanicError);
 
@@ -19,7 +17,6 @@ void testEquality<T>({
   @required T a2,
   @required T b,
 }) {
-
   void runTests() {
     test('reflexive', () {
       expect(a, equals(a));
@@ -48,9 +45,9 @@ void testEquality<T>({
               (a.hashCode == b.hashCode),
           isTrue);
     });
-  };
+  }
 
-  if(description != null) {
+  if (description != null) {
     group(description, runTests);
   } else {
     runTests();

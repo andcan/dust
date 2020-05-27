@@ -1,0 +1,37 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build_dart_packages:
+    runs-on: ubuntu-latest
+
+    container:
+      image: google/dart:${{ matrix.version }}
+
+    strategy:
+      matrix:
+        package: ["dust"]
+        version: ["latest"]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        working-directory: packages/${{ matrix.package }}
+        run: pub get
+
+      - name: Analyze
+        working-directory: packages/${{ matrix.package }}
+        run: dartanalyzer --fatal-infos --fatal-warnings .
+
+      - name: Run tests
+        working-directory: packages/${{ matrix.package }}
+        run: ../tool/coverage.sh
+
+      - name: Upload coverage to codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.package }}
+          file: ./packages/${{ matrix.package }}/coverage/lcov.info
