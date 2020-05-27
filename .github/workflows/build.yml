@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         package: ["dust"]
-        version: ["latest"]
+        version: ["latest", "dev"]
 
     steps:
       - uses: actions/checkout@v2
