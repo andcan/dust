@@ -1,6 +1,6 @@
+import 'package:dust/dust.dart';
 import 'package:test/test.dart';
 
-import 'package:dust/dust.dart';
 import 'shared.dart';
 
 void main() {

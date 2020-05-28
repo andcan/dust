@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dust/dust.dart';
 import 'package:meta/meta.dart';
 
@@ -26,13 +28,6 @@ class Err<T, E> implements Result<T, E> {
   bool get isOk => false;
 
   @override
-  Option<ErrorAndStackTrace<E>> get toErr =>
-      Some(ErrorAndStackTrace(error, stackTrace));
-
-  @override
-  Option<T> get toOk => None<T>();
-
-  @override
   bool operator ==(Object other) =>
       identical(this, other) || other is Err && error == other.error;
 
@@ -55,6 +50,10 @@ class Err<T, E> implements Result<T, E> {
     }
     return contains;
   }
+
+  @override
+  Option<ErrorAndStackTrace<E>> err() =>
+      Some(ErrorAndStackTrace(error, stackTrace));
 
   @override
   T expect(String message) => throw Panic('$message: $error');
@@ -87,6 +86,9 @@ class Err<T, E> implements Result<T, E> {
     @required U Function(E error, StackTrace stackTrace) err,
   }) =>
       err(error, stackTrace);
+
+  @override
+  Option<T> ok() => None<T>();
 
   @override
   Result<T, F> or<F>(Result<T, F> other) => other;
@@ -123,12 +125,6 @@ class Ok<T, E> implements Result<T, E> {
   bool get isOk => true;
 
   @override
-  Option<ErrorAndStackTrace<E>> get toErr => None<ErrorAndStackTrace<E>>();
-
-  @override
-  Option<T> get toOk => Some(value);
-
-  @override
   bool operator ==(Object other) =>
       identical(this, other) || other is Ok && value == other.value;
 
@@ -144,6 +140,9 @@ class Ok<T, E> implements Result<T, E> {
 
   @override
   bool containsError(E error, [StackTrace stackTrace]) => false;
+
+  @override
+  Option<ErrorAndStackTrace<E>> err() => None<ErrorAndStackTrace<E>>();
 
   @override
   T expect(String message) => value;
@@ -175,6 +174,9 @@ class Ok<T, E> implements Result<T, E> {
     @required U Function(E error, StackTrace stackTrace) err,
   }) =>
       ok(value);
+
+  @override
+  Option<T> ok() => Some(value);
 
   @override
   Result<T, F> or<F>(Result<T, F> other) => Ok(value);
@@ -211,17 +213,6 @@ abstract class Result<T, E> {
   /// Returns true if the result is a [Ok].
   bool get isOk;
 
-  /// Converts from [Result]<[T], [E]> to [Option]<[ErrorAndStackTrace]<[E]>>.
-  ///
-  /// Converts this into an [Option]<[ErrorAndStackTrace]<[E]>>, and discarding
-  /// the value, if any.
-  Option<ErrorAndStackTrace<E>> get toErr;
-
-  /// Converts from [Result]<[T], [E]> to [Option]<[T]>.
-  ///
-  /// Converts this into an [Option]<[T]>, and discarding the error, if any.
-  Option<T> get toOk;
-
   /// Returns [result] if this is [Ok]
   ///
   /// Otherwise returns the error of this
@@ -238,6 +229,12 @@ abstract class Result<T, E> {
 
   /// Returns true if the result is an [Err] containing the given error.
   bool containsError(E error, [StackTrace stackTrace]);
+
+  /// Converts from [Result]<[T], [E]> to [Option]<[ErrorAndStackTrace]<[E]>>.
+  ///
+  /// Converts this into an [Option]<[ErrorAndStackTrace]<[E]>>, and discarding
+  /// the value, if any.
+  Option<ErrorAndStackTrace<E>> err();
 
   /// Unwraps a result, yielding the content of an [Ok].
   ///
@@ -280,6 +277,11 @@ abstract class Result<T, E> {
     @required U Function(E error, StackTrace stackTrace) err,
   });
 
+  /// Converts from [Result]<[T], [E]> to [Option]<[T]>.
+  ///
+  /// Converts this into an [Option]<[T]>, and discarding the error, if any.
+  Option<T> ok();
+
   /// Returns [other] if the result is [Err], otherwise returns this.
   ///
   /// Arguments are eagerly evaluated; if you are passing the result of a
@@ -302,6 +304,33 @@ abstract class Result<T, E> {
   T unwrap();
 }
 
+/// Used by [ResultStreamExtension.capture].
+class _CaptureResultSink<T, E> implements EventSink<T> {
+  final EventSink<Result<T, E>> _sink;
+
+  _CaptureResultSink(EventSink<Result<T, E>> sink) : _sink = sink;
+
+  @override
+  void add(T value) => _sink.add(Ok<T, E>(value));
+
+  @override
+  void addError(Object error, [StackTrace stackTrace]) =>
+      _sink.add(Err<T, E>.withStackTrace(error as E, stackTrace));
+
+  @override
+  void close() => _sink.close();
+}
+
+class _CaptureResultStreamTransformer<T, E>
+    extends StreamTransformerBase<T, Result<T, E>> {
+  const _CaptureResultStreamTransformer();
+
+  @override
+  Stream<Result<T, E>> bind(Stream<T> source) =>
+      Stream<Result<T, E>>.eventTransformed(
+          source, (sink) => _CaptureResultSink<T, E>(sink));
+}
+
 /// [Object] extension for [Result].
 extension ResultExtension<T, E> on T {
   /// Returns a [Result]<[T], [E]> containing this.
@@ -318,4 +347,13 @@ extension ResultFutureExtension<T, E> on Future<T> {
         onError: (E error, StackTrace stackTrace) =>
             Err<T, E>.withStackTrace(error, stackTrace),
       );
+}
+
+extension ResultStreamExtension<T, E> on Stream<T> {
+  /// Captures the results of a stream into a stream of [Result]<[T], [E]> values.
+  ///
+  /// The returned stream will not have any error events.
+  /// Errors from the source stream have been converted to [Err]s.
+  Stream<Result<T, E>> capture() =>
+      transform(_CaptureResultStreamTransformer<T, E>());
 }

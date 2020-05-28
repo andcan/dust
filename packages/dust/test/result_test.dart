@@ -84,6 +84,19 @@ void main() {
           equals(Err.withStackTrace('ERR', trace)));
     });
 
+    test('capture stream', () async {
+      expect(
+          Stream.fromIterable([42, 'ERR', 12, 'ERR1'])
+              .map((e) => e is String ? throw e : e)
+              .capture(),
+          emitsInOrder([
+            const Ok(42),
+            Err('ERR'),
+            const Ok(12),
+            Err('ERR1'),
+          ]));
+    });
+
     test('contains', () {
       expect(const Ok(42).contains(42), equals(isTrue));
       expect(const Ok(42).contains(13), equals(isFalse));
@@ -183,14 +196,14 @@ void main() {
     });
 
     test('to err', () {
-      expect(const Ok(42).toErr, equals(const None()));
-      expect(Err.withStackTrace('ERR', trace).toErr,
+      expect(const Ok(42).err(), equals(const None()));
+      expect(Err.withStackTrace('ERR', trace).err(),
           equals(Some(ErrorAndStackTrace('ERR', trace))));
     });
 
     test('to ok', () {
-      expect(const Ok(42).toOk, equals(const Some(42)));
-      expect(Err('ERR').toOk, equals(const None()));
+      expect(const Ok(42).ok(), equals(const Some(42)));
+      expect(Err('ERR').ok(), equals(const None()));
     });
 
     test('to result', () {
