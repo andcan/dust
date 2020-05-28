@@ -4,6 +4,18 @@ import 'package:meta/meta.dart';
 
 typedef DisposerFunc = FutureOr<void> Function();
 
+extension DisposerSinkExtension on Sink {
+  void disposer(Disposer d) => d.addDisposer(close);
+}
+
+extension DisposerStreamSubscriptionExtension on StreamSubscription {
+  void disposer(Disposer d) => d.addDisposer(cancel);
+}
+
+extension DisposerFuncExtension<T> on DisposerFunc {
+  void disposer(Disposer d) => d.addDisposer(this);
+}
+
 mixin Disposer {
   final List<DisposerFunc> _disposers = <DisposerFunc>[];
 
