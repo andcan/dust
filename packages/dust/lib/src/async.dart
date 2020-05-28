@@ -34,9 +34,3 @@ mixin Disposer {
     ], eagerError: true);
   }
 }
-
-mixin SubscriptionDisposer on Disposer {
-  @protected
-  void manageSubscription(StreamSubscription subscription) =>
-      addDisposer(subscription.cancel);
-}

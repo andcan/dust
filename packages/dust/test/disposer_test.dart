@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:dust/dust.dart';
-import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -33,19 +30,6 @@ void main() {
       });
     }, timeout: const Timeout(Duration(milliseconds: 1000)));
   });
-
-  group('suscription disposer', () {
-    group('dispose', () {
-      test('cancels subscription', () async {
-        final subs = [for (var i = 0; i < 8; i++) _StreamSubscription()];
-        final disposer = _SubscriptionDisposer(subs);
-        await expectLater(disposer.dispose(), completes);
-        for (final sub in subs) {
-          verify(sub.cancel());
-        }
-      });
-    }, timeout: const Timeout(Duration(milliseconds: 1000)));
-  });
 }
 
 class _Disposer with Disposer {
@@ -57,13 +41,3 @@ class _Disposer with Disposer {
 }
 
 class _EmptyDisposer with Disposer {}
-
-class _StreamSubscription extends Mock implements StreamSubscription {}
-
-class _SubscriptionDisposer with Disposer, SubscriptionDisposer {
-  _SubscriptionDisposer(Iterable<StreamSubscription> subscriptions) {
-    for (final sub in subscriptions) {
-      manageSubscription(sub);
-    }
-  }
-}
