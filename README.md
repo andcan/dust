@@ -1,0 +1,1 @@
+![Build](https://github.com/andcan/dust/workflows/Build/badge.svg)
